@@ -14,10 +14,33 @@ import javax.crypto.spec.*;
  * The master key can be set either with `setMasterKey` or with `randomKeyGen`.
  * Encrypted data format: salt[16] + iv[16] + ciphertext[n] + mac[32].
  * Ciphertext authenticity is verified with HMAC SHA256.
- * 
+ *
+ * 使用 AES CBC/CFB - 128/192/256 位加密数据和文件。
+ * 加密和身份验证密钥是使用 HKDF/PBKDF2 从提供的密钥/密码派生的。
+ * 可以使用`setMasterKey` 或`randomKeyGen` 设置主密钥。
+ * 加密数据格式：salt[16] + iv[16] + ciphertext[n] + mac[32]。
+ * 密文真实性通过 HMAC SHA256 验证。
+ *
  * @author Tasos M. Adamopoulos
  */
-class AesEncryption {
+public class AesEncryption {
+
+    public static void main(String[] args) {
+        // 密钥
+        String password = "Cloud@Train123";
+        // 加密方式
+        AesEncryption aes = new AesEncryption("cfb");
+
+        //明文数据
+        String explicitData = "HelloJieAn";
+        byte[] encrypt = aes.encrypt(explicitData, password);
+        System.out.println("[密文数据]:"+new String(encrypt));
+
+        //密文数据
+        String vagueData = "7vsfQt7ywrnx1n9wei9lf13fIjyd8nKyi+D2fFg3P2dR/H1vlRcQOEeNDnde9H8TUfUwdxDzGIv9vjo9Xc/Apc2ZCxE5iIGxygM=";
+        byte[] decrypt = aes.decrypt(vagueData, password);
+        System.out.println("[明文数据]:"+new String(decrypt));
+    }
 	private HashMap<String, String> modes = new HashMap<String, String>() {
         { put("CBC", "AES/CBC/PKCS5Padding"); }; 
         { put("CFB", "AES/CFB8/NoPadding"); } 
@@ -542,8 +565,9 @@ class AesEncryption {
                 hmac.init(new SecretKeySpec(prk, "HmacSHA256"));
                 hkey = hmac.doFinal(hkey);
 
-                if (i + hashLen > dkeyLen) 
+                if (i + hashLen > dkeyLen) {
                     hashLen = hashLen - (i + hashLen - dkeyLen);
+                }
                 System.arraycopy(hkey, 0, dkey, i, hashLen);
             }
             return dkey;
